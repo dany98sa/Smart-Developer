@@ -1,0 +1,32 @@
+{
+    "name": "smarttesting",
+    "version": "0.0.1",
+    "description": "a module for github integration in automatic test project",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node index.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/dany98sa/Smart-Developer.git"
+    },
+    "keywords": [
+        "automatic",
+        "testing"
+    ],
+    "author": "Daniele De Marco",
+    "license": "MIT",
+    "dependencies": {
+        "@octokit/rest": "^18.12.0",
+        "@octokit/webhooks": "^9.23.0",
+        "dotenv": "^16.0.0",
+        "eventsource": "^2.0.0",
+        "octokit": "^1.7.1",
+        "shelljs": "^0.8.5",
+        "winston": "^3.6.0"
+    },
+    "devDependencies": {
+        "eslint": "^8.12.0"
+    }
+}
