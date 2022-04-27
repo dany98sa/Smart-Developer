@@ -1,26 +1,23 @@
-const { Octokit } = require('@octokit/rest');
-const { pull } = require('./git/pull');
 const logger = require('./util/logger')
 const EventSource = require('eventsource')
 require('dotenv').config()
 const { Webhooks, createNodeMiddleware } = require("@octokit/webhooks");
+const { clone, switchBranch, push } = require("./git/shell");
 const { isMaven } = require('./generateTest/check');
-const { removeProjectDir, createProjectDir } = require('./util/file');
+const {generateTest}=require("./generateTest/evosuiteRun")
+const shell = require('shelljs')
 
-logger.info("app start")
+logger.info("smarttesting start")
 
 const webhooks = new Webhooks({
     secret: process.env.SECRET
 });
 
-const octokit = new Octokit({
-    auth: process.env.PERSONAL_ACCESS_TOKEN
-})
-
-const webhookProxyUrl = "https://smee.io/YhRaTdSdg41PI3x4";
+const webhookProxyUrl = process.env.WEBHOOKPROXYURL;
 
 const source = new EventSource(webhookProxyUrl);
 
+//riceve un hook da github e effettua tutte le operazioni necessarie
 source.onmessage = async (event) => {
     const webhookEvent = JSON.parse(event.data);
     webhooks.verifyAndReceive({
@@ -30,34 +27,30 @@ source.onmessage = async (event) => {
         payload: webhookEvent.body,
     }).catch(console.error);
     switch (webhookEvent["x-github-event"]) {
+        //caso in cui riceve un hook di push
         case "push":
-            logger.info("push event received")
-            await pull(
-                octokit,
-                webhookEvent.body.repository.full_name,
-                webhookEvent.body.ref.replace("refs/heads/", "")
-            )
-            if (isMaven(webhookEvent.body.repository.full_name)) {
-                logger.info("maven project")
-            } else {
-                logger.info("not a maven project")
-                removeProjectDir(webhookEvent.body.repository.full_name)
+            //se il nome di chi fa il push non è il bot allora
+            if (webhookEvent.body.pusher.name !== process.env.EXCLUDEUSERNAME) {
+                logger.info("push event received")
+                //chiama la funzione per effettuare il clone
+                clone(webhookEvent.body.repository.clone_url)
+                //cambia il branch con quello dove è avvenuto il commit
+                switchBranch(webhookEvent.body.ref.replace("refs/heads/", ""),
+                    webhookEvent.body.repository.name)
+                //controlla se è un progetto maven e ottiene la directory 
+                //contenente il file pom.xml
+                let dirMaven = isMaven(webhookEvent.body.repository.name)
+                if (dirMaven !== ""){
+                    //chiama la funzione per generare la test suite mediante evosuite
+                    generateTest(dirMaven)
+                    //chiama la funzione per fare il push
+                    push("repository/"+webhookEvent.body.repository.name)
+                }
+                //elimina la cartella del progetto dopo aver eseguito tutte le operazioni
+                shell.rm("repository/"+webhookEvent.body.repository.name)
             }
             break;
-        case "installation":
-            switch (webhookEvent.body.action) {
-                case 'created':
-                    createProjectDir(webhookEvent.installation.account.login)
-                    break;
-                case 'deleted':
-                    removeProjectDir(webhookEvent.installation.account.login)
-                    break;
-                default:
-                    console.log("events received")
-                    console.log(webhookEvent)
-                    break;
-            }
-            break;
+        //altri casi di hook
         default:
             console.log("events received")
             console.log(webhookEvent)
