@@ -25,7 +25,7 @@ exports.generateTest = (repo) => {
     logger.info("mvn compile " + repo)
     //se il progetto è stato compilato esegue evosuite
 
-        const evosuiteOutput = shell.exec('$EVOSUITE $EVOSUITE -target target/classes')
+        const evosuiteOutput = shell.exec('java -jar /home/dany98/evosuite-1.0.6.jar -target target/classes')
 
         if (evosuiteOutput.code !== 0) {
             logger.error("evosuite compile error")
