@@ -10,7 +10,7 @@ const logLevels = {
 };
 
 let d = new Date;
-let fname = d.toLocaleString().replaceAll(" ", "").replaceAll("/", "-").replaceAll(":", "_") + ".log"
+let fname = d.toLocaleString().replace(" ", "").replace("/", "-").replace(":", "_") + ".log"
 
 const logger = createLogger({
     levels: logLevels,

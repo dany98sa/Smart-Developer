@@ -42,7 +42,7 @@ source.onmessage = async (event) => {
                 let dirMaven = isMaven(webhookEvent.body.repository.name)
                 if (dirMaven !== ""){
                     //chiama la funzione per generare la test suite mediante evosuite
-                    generateTest(dirMaven)
+                    generateTest("repository/"+dirMaven)
                     //chiama la funzione per fare il push
                     push("repository/"+webhookEvent.body.repository.name)
                 }
